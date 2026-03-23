@@ -82,4 +82,7 @@ dependencies {
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+
+    // Material (View-based) — required for Theme.Material3.DayNight.NoActionBar in AndroidManifest
+    implementation("com.google.android.material:material:1.12.0")
 }
