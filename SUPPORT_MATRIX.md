@@ -1,22 +1,43 @@
 # SUPPORT_MATRIX
 Chat-ID: CH-20260308-04
 
-Implemented
-- modular project skeleton
-- archive/relation/settings screens
+## Implemented (Phase 1 – Baseline)
+- modular project skeleton (core/model, core/storage, core/llm, feature/*, provider/*)
+- archive/relation/settings screens (legacy, replaced by new screens below)
 - free local model menu
 - paid-model daily budget policy
 - AnythingLLM-like custom gateway seam
 - future-ready idea for chat extraction into next pipeline step
-- `app/build.gradle.kts` with all BuildConfig fields (PERPLEXITY_API_KEY, OLLAMA_BASE_URL, CUSTOM_OPENAI_BASE_URL, CUSTOM_OPENAI_API_KEY, CHAT_ID)
+- `app/build.gradle.kts` with all BuildConfig fields
 - bundled `gradle/wrapper/gradle-wrapper.jar`
 
-Fixed
-- LazyColumn nested inside verticalScroll Column (unbounded-height runtime crash) — content now wrapped in Box(weight(1f)), ArchiveScreen/RelationsScreen use fillMaxSize()
+## Implemented (Phase 2 – DocuPilot Feature Port)
+- **Room Database** with 5 entities (Folder, File, Analysis, Project, ProjectFileCrossRef)
+- **SAF File Scanner** – recursive document scanning via Storage Access Framework with SHA-256 hash-based delta detection
+- **AI Document Analysis** – Perplexity API integration with structured JSON response parsing (topics, project suggestions, summary, action items, confidence)
+- **Project Clustering** – auto-derives projects from AI analysis results (suggestion + topic frequency)
+- **Masterfile Generation** – writes `PHAROS_MASTER_<ProjectName>.md` into user-selected folder
+- **Encrypted API Key Storage** – EncryptedSharedPreferences backed by Android Keystore
+- **PDF Text Extraction** – PDFBox-Android for `.pdf` content extraction
+- **New 5-Tab Navigation** – Dashboard, Folders, Files, Projects, Settings
+- **Dashboard Screen** – scan/analyze/update buttons with progress indicators and cancel support
+- **Folders Screen** – SAF folder picker with persistent URI permissions
+- **Files Screen** – file list with status icons (NEVER, UP_TO_DATE, STALE, FAILED, UNSUPPORTED)
+- **File Detail Screen** – analysis results (summary, topics, action items, confidence) + per-file analyze button
+- **Projects Screen** – auto-generated project list with detail view showing assigned files
+- **Settings Screen** – encrypted API key management, test, analysis mode toggle, privacy notice
+- **PharosTheme** – Material3 light/dark/dynamic color theme
+- **Unit Tests** – 28 tests (JsonParser, FilenameSanitizer, ProjectClustering)
+- **Hilt DI** – all new dependencies wired via Dagger Hilt @Module
+
+## Fixed
+- LazyColumn nested inside verticalScroll Column (unbounded-height runtime crash)
 - SettingsScreen now scrolls independently via verticalScroll
 - AndroidManifest: added android:icon and android:supportsRtl
 
-Missing / partial
-- no repository scanner yet
+## Missing / partial
+- no cloud sync yet (local folder sync via SAF is implemented)
 - no graph canvas yet
-- no real LLM network calls (ping only)
+- no Windows/Desktop build yet (see ROADMAP_WINDOWS_SYNC.md)
+- no contradiction detection yet (planned)
+- no topic clustering rules yet (AI-driven clustering is implemented)
