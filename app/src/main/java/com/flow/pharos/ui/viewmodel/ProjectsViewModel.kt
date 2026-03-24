@@ -1,5 +1,6 @@
 package com.flow.pharos.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.flow.pharos.core.model.entity.AnalysisEntity
@@ -32,11 +33,15 @@ class ProjectsViewModel @Inject constructor(
 
     fun loadProjectFiles(projectId: String) {
         viewModelScope.launch {
-            val files = projectRepository.getFilesForProjectList(projectId)
-            _projectFiles.value = files
-            val analyses = mutableMapOf<String, AnalysisEntity>()
-            files.forEach { file -> analysisRepository.getLatestAnalysisForFile(file.id)?.let { analyses[file.id] = it } }
-            _fileAnalyses.value = analyses
+            try {
+                val files = projectRepository.getFilesForProjectList(projectId)
+                _projectFiles.value = files
+                val analyses = mutableMapOf<String, AnalysisEntity>()
+                files.forEach { file -> analysisRepository.getLatestAnalysisForFile(file.id)?.let { analyses[file.id] = it } }
+                _fileAnalyses.value = analyses
+            } catch (e: Exception) {
+                Log.e("ProjectsViewModel", "Failed to load project files", e)
+            }
         }
     }
 }
