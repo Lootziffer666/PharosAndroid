@@ -117,7 +117,7 @@ class PerplexityProvider(
         return try {
             val json = gson.fromJson(responseBody, JsonObject::class.java)
             val choices = json.getAsJsonArray("choices")
-            if (choices != null && choices.isNotEmpty()) {
+            if (choices != null && choices.size() > 0) {
                 choices[0].asJsonObject.getAsJsonObject("message").get("content").asString
             } else responseBody
         } catch (e: Exception) { responseBody }
