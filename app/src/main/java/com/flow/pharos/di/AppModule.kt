@@ -2,11 +2,24 @@ package com.flow.pharos.di
 
 import android.content.Context
 import com.flow.pharos.BuildConfig
+import com.flow.pharos.core.llm.AiApiProvider
 import com.flow.pharos.core.storage.BudgetRepository
 import com.flow.pharos.core.storage.SeedRepository
+import com.flow.pharos.core.storage.db.PharosDatabase
+import com.flow.pharos.core.storage.repository.AnalysisRepository
+import com.flow.pharos.core.storage.repository.FileRepository
+import com.flow.pharos.core.storage.repository.FolderRepository
+import com.flow.pharos.core.storage.repository.ProjectRepository
+import com.flow.pharos.core.storage.repository.SettingsRepository
 import com.flow.pharos.provider.customopenai.CustomOpenAiProvider
 import com.flow.pharos.provider.ollama.OllamaProvider
 import com.flow.pharos.provider.perplexity.PerplexityProvider
+import com.flow.pharos.usecase.AnalysisUseCase
+import com.flow.pharos.usecase.MasterfileUseCase
+import com.flow.pharos.usecase.ProjectClusteringUseCase
+import com.flow.pharos.usecase.ScanUseCase
+import com.flow.pharos.util.PdfTextExtractor
+import com.flow.pharos.util.TextExtractor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -42,4 +55,88 @@ object AppModule {
     @Singleton
     fun provideCustomOpenAiProvider(): CustomOpenAiProvider =
         CustomOpenAiProvider(BuildConfig.CUSTOM_OPENAI_BASE_URL, BuildConfig.CUSTOM_OPENAI_API_KEY)
+
+    @Provides
+    @Singleton
+    fun providePharosDatabase(@ApplicationContext context: Context): PharosDatabase =
+        PharosDatabase.getInstance(context)
+
+    @Provides
+    @Singleton
+    fun provideFolderRepository(database: PharosDatabase): FolderRepository =
+        FolderRepository(database.folderDao())
+
+    @Provides
+    @Singleton
+    fun provideFileRepository(database: PharosDatabase): FileRepository =
+        FileRepository(database.fileDao())
+
+    @Provides
+    @Singleton
+    fun provideAnalysisRepository(database: PharosDatabase): AnalysisRepository =
+        AnalysisRepository(database.analysisDao())
+
+    @Provides
+    @Singleton
+    fun provideProjectRepository(database: PharosDatabase): ProjectRepository =
+        ProjectRepository(database.projectDao(), database.projectFileCrossRefDao())
+
+    @Provides
+    @Singleton
+    fun provideSettingsRepository(@ApplicationContext context: Context): SettingsRepository =
+        SettingsRepository(context)
+
+    @Provides
+    @Singleton
+    fun provideTextExtractor(@ApplicationContext context: Context): TextExtractor =
+        TextExtractor(context)
+
+    @Provides
+    @Singleton
+    fun providePdfTextExtractor(): PdfTextExtractor = PdfTextExtractor()
+
+    @Provides
+    @Singleton
+    fun provideAiApiProvider(perplexityProvider: PerplexityProvider): AiApiProvider =
+        perplexityProvider
+
+    @Provides
+    @Singleton
+    fun provideScanUseCase(
+        @ApplicationContext context: Context,
+        folderRepo: FolderRepository,
+        fileRepo: FileRepository,
+        textExtractor: TextExtractor,
+        pdfExtractor: PdfTextExtractor
+    ): ScanUseCase = ScanUseCase(context, folderRepo, fileRepo, textExtractor, pdfExtractor)
+
+    @Provides
+    @Singleton
+    fun provideAnalysisUseCase(
+        fileRepo: FileRepository,
+        analysisRepo: AnalysisRepository,
+        settingsRepo: SettingsRepository,
+        aiProvider: AiApiProvider,
+        textExtractor: TextExtractor,
+        pdfExtractor: PdfTextExtractor,
+        @ApplicationContext context: Context
+    ): AnalysisUseCase = AnalysisUseCase(fileRepo, analysisRepo, settingsRepo, aiProvider, textExtractor, pdfExtractor, context)
+
+    @Provides
+    @Singleton
+    fun provideProjectClusteringUseCase(
+        analysisRepo: AnalysisRepository,
+        projectRepo: ProjectRepository,
+        fileRepo: FileRepository
+    ): ProjectClusteringUseCase = ProjectClusteringUseCase(analysisRepo, projectRepo, fileRepo)
+
+    @Provides
+    @Singleton
+    fun provideMasterfileUseCase(
+        @ApplicationContext context: Context,
+        projectRepo: ProjectRepository,
+        fileRepo: FileRepository,
+        analysisRepo: AnalysisRepository,
+        folderRepo: FolderRepository
+    ): MasterfileUseCase = MasterfileUseCase(context, projectRepo, fileRepo, analysisRepo, folderRepo)
 }
