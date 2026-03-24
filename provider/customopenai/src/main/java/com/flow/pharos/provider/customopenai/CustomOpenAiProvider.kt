@@ -11,6 +11,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 class CustomOpenAiProvider(
@@ -30,7 +31,9 @@ class CustomOpenAiProvider(
                 .url("${baseUrl.trimEnd('/')}/models")
                 .header("Authorization", "Bearer $apiKey")
                 .build()
-            val body = httpClient.newCall(request).execute().use { it.body!!.string() }
+            val body = httpClient.newCall(request).execute().use {
+                it.body?.string() ?: throw IOException("Empty response body")
+            }
             val arr = JSONObject(body).getJSONArray("data")
             (0 until arr.length()).map { arr.getJSONObject(it).getString("id") }
         }
@@ -57,7 +60,9 @@ class CustomOpenAiProvider(
                     .header("Authorization", "Bearer $apiKey")
                     .post(payload.toString().toRequestBody(JSON))
                     .build()
-                val body = httpClient.newCall(req).execute().use { it.body!!.string() }
+                val body = httpClient.newCall(req).execute().use {
+                    it.body?.string() ?: throw IOException("Empty response body")
+                }
                 val root = JSONObject(body)
                 val choices = root.getJSONArray("choices")
                 if (choices.length() == 0) throw IllegalStateException("No choices in API response")

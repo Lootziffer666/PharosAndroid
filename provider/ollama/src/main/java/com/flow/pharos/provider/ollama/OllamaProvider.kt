@@ -13,6 +13,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 class OllamaProvider(
@@ -33,7 +34,9 @@ class OllamaProvider(
             val request = Request.Builder()
                 .url("${baseUrl.trimEnd('/')}/api/tags")
                 .build()
-            val body = httpClient.newCall(request).execute().use { it.body!!.string() }
+            val body = httpClient.newCall(request).execute().use {
+                it.body?.string() ?: throw IOException("Empty response body")
+            }
             val arr = JSONObject(body).getJSONArray("models")
             (0 until arr.length()).map { arr.getJSONObject(it).getString("name") }
         }
@@ -62,7 +65,9 @@ class OllamaProvider(
                     .url("${baseUrl.trimEnd('/')}/api/chat")
                     .post(payload.toString().toRequestBody(JSON))
                     .build()
-                val body = httpClient.newCall(req).execute().use { it.body!!.string() }
+                val body = httpClient.newCall(req).execute().use {
+                    it.body?.string() ?: throw IOException("Empty response body")
+                }
                 val root = JSONObject(body)
                 val message = root.optJSONObject("message")
                     ?: throw IllegalStateException("No message in Ollama response")
