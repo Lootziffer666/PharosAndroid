@@ -100,13 +100,15 @@ fun SyncScreen() {
                     scope.launch {
                         isWorking = true
                         statusMessage = "Generating manifest\u2026"
-                        withContext(Dispatchers.IO) {
+                        val generated = withContext(Dispatchers.IO) {
                             val engine = SyncEngine(File(localPath), "windows-desktop")
-                            manifest = engine.generateManifest()
-                            engine.writeManifest(manifest!!)
+                            val m = engine.generateManifest()
+                            engine.writeManifest(m)
+                            m
                         }
+                        manifest = generated
                         statusMessage =
-                            "Manifest generated: ${manifest!!.entries.size} files indexed."
+                            "Manifest generated: ${generated.entries.size} files indexed."
                         isWorking = false
                     }
                 },
@@ -118,18 +120,17 @@ fun SyncScreen() {
                     scope.launch {
                         isWorking = true
                         statusMessage = "Comparing folders\u2026"
-                        withContext(Dispatchers.IO) {
+                        val diff = withContext(Dispatchers.IO) {
                             val engine = SyncEngine(File(localPath), "windows-desktop")
                             val remoteEngine = SyncEngine(File(remotePath), "remote")
                             val localManifest = engine.generateManifest()
                             val remoteManifest = remoteEngine.generateManifest()
-                            syncDiff =
-                                ManifestComparator.compare(localManifest, remoteManifest)
+                            ManifestComparator.compare(localManifest, remoteManifest)
                         }
-                        val d = syncDiff!!
+                        syncDiff = diff
                         statusMessage =
-                            "Comparison: ${d.added.size} new, ${d.modified.size} modified, " +
-                                "${d.deleted.size} deleted, ${d.unchanged.size} unchanged."
+                            "Comparison: ${diff.added.size} new, ${diff.modified.size} modified, " +
+                                "${diff.deleted.size} deleted, ${diff.unchanged.size} unchanged."
                         isWorking = false
                     }
                 },
@@ -171,59 +172,63 @@ fun SyncScreen() {
         Divider()
 
         // Manifest / Diff display
-        if (syncDiff != null) {
-            val d = syncDiff!!
+        val currentDiff = syncDiff
+        val currentManifest = manifest
+        if (currentDiff != null) {
             Text("Sync Diff", style = MaterialTheme.typography.h6)
             LazyColumn(modifier = Modifier.weight(1f)) {
-                if (d.added.isNotEmpty()) {
+                if (currentDiff.added.isNotEmpty()) {
                     item {
                         Text(
-                            "+ New (${d.added.size})",
+                            "+ New (${currentDiff.added.size})",
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colors.primary
                         )
                     }
-                    items(d.added) { entry ->
+                    items(currentDiff.added) { entry ->
                         Text("  + ${entry.relativePath} (${formatSize(entry.size)})")
                     }
                 }
-                if (d.modified.isNotEmpty()) {
+                if (currentDiff.modified.isNotEmpty()) {
                     item {
                         Text(
-                            "~ Modified (${d.modified.size})",
+                            "~ Modified (${currentDiff.modified.size})",
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colors.secondary
                         )
                     }
-                    items(d.modified) { (_, remote) ->
+                    items(currentDiff.modified) { (_, remote) ->
                         Text("  ~ ${remote.relativePath} (${formatSize(remote.size)})")
                     }
                 }
-                if (d.deleted.isNotEmpty()) {
+                if (currentDiff.deleted.isNotEmpty()) {
                     item {
                         Text(
-                            "- Deleted (${d.deleted.size})",
+                            "- Deleted (${currentDiff.deleted.size})",
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colors.error
                         )
                     }
-                    items(d.deleted) { entry ->
+                    items(currentDiff.deleted) { entry ->
                         Text("  - ${entry.relativePath}")
                     }
                 }
-                if (d.unchanged.isNotEmpty()) {
+                if (currentDiff.unchanged.isNotEmpty()) {
                     item {
-                        Text("= Unchanged (${d.unchanged.size})", fontWeight = FontWeight.Bold)
+                        Text(
+                            "= Unchanged (${currentDiff.unchanged.size})",
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
-        } else if (manifest != null) {
+        } else if (currentManifest != null) {
             Text(
-                "Local Manifest (${manifest!!.entries.size} files)",
+                "Local Manifest (${currentManifest.entries.size} files)",
                 style = MaterialTheme.typography.h6
             )
             LazyColumn(modifier = Modifier.weight(1f)) {
-                items(manifest!!.entries) { entry ->
+                items(currentManifest.entries) { entry ->
                     Text(
                         "${entry.relativePath} \u2013 ${formatSize(entry.size)} \u2013 " +
                             "${entry.sha256.take(8)}\u2026"

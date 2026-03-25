@@ -67,7 +67,9 @@ class SyncEngine(
         if (!manifestFile.exists()) return null
         return try {
             gson.fromJson(manifestFile.readText(), SyncManifest::class.java)
-        } catch (_: Exception) {
+        } catch (e: com.google.gson.JsonSyntaxException) {
+            null
+        } catch (e: java.io.IOException) {
             null
         }
     }
