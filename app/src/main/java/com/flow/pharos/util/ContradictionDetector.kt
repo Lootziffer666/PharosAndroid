@@ -42,10 +42,11 @@ object ContradictionDetector {
                     .sorted()
                 if (overlapTopics.isEmpty()) continue
 
-                overlapTopics.forEach { topic ->
+                var foundForPair = false
+                for (topic in overlapTopics) {
                     val leftNegatesTopic = negatesTopic(left.summary, topic)
                     val rightNegatesTopic = negatesTopic(right.summary, topic)
-                    if (leftNegatesTopic == rightNegatesTopic) return@forEach
+                    if (leftNegatesTopic == rightNegatesTopic) continue
 
                     val reason = if (leftNegatesTopic) {
                         "Left summary negates topic '$topic' while right summary affirms it."
@@ -58,8 +59,10 @@ object ContradictionDetector {
                         sharedTopic = topic,
                         reason = reason
                     )
-                    return@forEach
+                    foundForPair = true
+                    break
                 }
+                if (foundForPair) continue
             }
         }
         return results.distinctBy { "${it.leftFileName}|${it.rightFileName}|${it.sharedTopic}" }
