@@ -114,8 +114,8 @@ Provenance-first truth model for transparent data lineage:
 ## CI/CD
 
 GitHub Actions builds both targets on every push:
-- **Ubuntu runner** → Android Debug APK artifact
-- **Windows runner** → Desktop JAR artifact
+- **Ubuntu runner** → Android Debug APK artifact ##deactivated right now
+- **Windows runner** → Desktop JAR artifact  ##deactivated right now
 
 ## Docs
 
